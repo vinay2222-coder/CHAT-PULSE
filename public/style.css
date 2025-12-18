@@ -22,31 +22,25 @@ body {
     background-color: var(--bg-dark);
     color: var(--text-main);
     min-height: 100vh;
-    overflow-x: hidden;
+    overflow: hidden; /* Prevent body scroll, use container scroll */
     line-height: 1.6;
 }
 
 /* --- 2. Interactive Background --- */
 .pulse-bg {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
     z-index: -1;
-    overflow: hidden;
 }
 
 .blob-1, .blob-2 {
     position: absolute;
-    width: 600px;
-    height: 600px;
+    width: 600px; height: 600px;
     background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
     border-radius: 50%;
     filter: blur(80px);
     animation: move 20s infinite alternate;
 }
-
 .blob-1 { top: -150px; right: -100px; }
 .blob-2 { bottom: -150px; left: -100px; background: radial-gradient(circle, rgba(236, 72, 153, 0.1) 0%, rgba(0, 0, 0, 0) 70%); }
 
@@ -55,95 +49,7 @@ body {
     to { transform: translate(100px, 100px) scale(1.1); }
 }
 
-/* --- 3. Navigation --- */
-.landing-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-.landing-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 30px 0;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(15, 23, 42, 0.8);
-    backdrop-filter: blur(10px);
-}
-
-.logo { font-size: 1.8rem; font-weight: 800; }
-.logo span { color: var(--primary); }
-.nav-links { display: flex; gap: 20px; align-items: center; }
-
-/* --- 4. Hero & Typography --- */
-.hero-section {
-    text-align: center;
-    padding: 100px 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.gradient-text {
-    background: linear-gradient(90deg, #6366f1, #a855f7);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-/* --- 5. Auth & Feature Cards --- */
-.auth-section {
-    display: flex;
-    justify-content: center;
-    padding: 60px 20px;
-}
-
-.login-card {
-    background: var(--glass);
-    backdrop-filter: blur(15px);
-    border: 1px solid var(--glass-border);
-    border-radius: 24px;
-    padding: 40px;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-}
-
-/* --- 6. Inputs & Buttons --- */
-.input-group { position: relative; margin-bottom: 20px; }
-.input-group i {
-    position: absolute;
-    left: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: var(--primary);
-}
-
-input {
-    width: 100%;
-    padding: 14px 14px 14px 45px;
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--glass-border);
-    border-radius: 12px;
-    color: white;
-    outline: none;
-}
-
-.btn-primary, .btn-large {
-    background: var(--primary);
-    color: white;
-    padding: 12px 25px;
-    border-radius: 12px;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    transition: 0.3s;
-}
-
-/* --- 7. Chat Interface Layout --- */
+/* --- 3. Chat Interface Layout (Fixed for 2-Column) --- */
 .chat-page-body {
     display: flex;
     justify-content: center;
@@ -155,41 +61,75 @@ input {
 #container {
     display: flex;
     width: 100%;
-    max-width: 1200px;
-    height: 85vh;
+    max-width: 1300px;
+    height: 90vh; /* Taller for better view */
     background: var(--glass);
     backdrop-filter: blur(20px);
     border: 1px solid var(--glass-border);
     border-radius: 24px;
     overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 
-/* Sidebar */
+/* Sidebar Styling */
 #sidebar {
-    width: 300px;
-    background: rgba(255, 255, 255, 0.03);
+    width: 320px;
+    background: rgba(255, 255, 255, 0.02);
     border-right: 1px solid var(--glass-border);
     display: flex;
     flex-direction: column;
 }
 
-.user-header { padding: 30px 20px; border-bottom: 1px solid var(--glass-border); }
+.user-header { padding: 25px; border-bottom: 1px solid var(--glass-border); }
+.logo { font-size: 1.5rem; font-weight: 800; }
+.logo span { color: var(--primary); }
 
-#users { flex: 1; overflow-y: auto; list-style: none; }
+#users { flex: 1; overflow-y: auto; list-style: none; padding: 10px 0; }
 #users li {
-    padding: 15px 20px;
+    padding: 12px 20px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 15px;
     cursor: pointer;
+    transition: background 0.2s;
 }
 #users li:hover { background: rgba(255, 255, 255, 0.05); }
 
-/* Chat Panel (Fills the rest of the container) */
+/* Avatar & Status Dots */
+.avatar {
+    width: 45px; height: 45px;
+    background: var(--primary);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.status-dot {
+    position: absolute;
+    bottom: -2px; right: -2px;
+    width: 12px; height: 12px;
+    background: #22c55e;
+    border: 2px solid #1e1e2e;
+    border-radius: 50%;
+}
+
+.badge {
+    background: #ef4444;
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 800;
+}
+
+/* Chat Panel Styling */
 #chat-panel {
-    flex: 1; 
+    flex: 1;
     display: flex;
     flex-direction: column;
+    background: rgba(0, 0, 0, 0.1);
 }
 
 #chat-header {
@@ -211,25 +151,28 @@ input {
 .my-message {
     align-self: flex-end;
     background: var(--primary);
-    padding: 10px 18px;
-    border-radius: 18px 18px 2px 18px;
-    max-width: 70%;
+    padding: 12px 18px;
+    border-radius: 18px 18px 4px 18px;
+    max-width: 65%;
+    box-shadow: 0 4px 15px var(--primary-glow);
 }
 
 .their-message {
     align-self: flex-start;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 10px 18px;
-    border-radius: 18px 18px 18px 2px;
-    max-width: 70%;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 12px 18px;
+    border-radius: 18px 18px 18px 4px;
+    max-width: 65%;
+    border: 1px solid var(--glass-border);
 }
 
 /* Input Area */
 #input-area {
-    padding: 25px 30px;
+    padding: 20px 30px;
     display: flex;
     gap: 15px;
     background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid var(--glass-border);
 }
 
 #msg {
@@ -237,29 +180,17 @@ input {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
     padding: 12px 20px;
-    border-radius: 30px;
+    border-radius: 15px;
+    color: white;
 }
 
 .btn-send {
     background: var(--primary);
     color: white;
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
+    width: 48px; height: 48px;
+    border-radius: 12px;
     border: none;
     cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    transition: transform 0.2s;
 }
-
-.btn-logout {
-    margin: 20px;
-    padding: 10px;
-    background: rgba(239, 68, 68, 0.2);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: 600;
-}
+.btn-send:hover { transform: scale(1.05); }
