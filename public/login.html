@@ -2,60 +2,81 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChatPulse | Login</title>
+    <title>Login | ChatPulse</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="landing-body">
+<body class="auth-page">
     <div class="pulse-bg">
         <div class="blob-1"></div>
         <div class="blob-2"></div>
     </div>
 
-    <div class="landing-container">
-        <nav class="landing-nav">
-            <div class="logo">Chat<span>Pulse</span></div>
-            <div class="nav-links">
-                <a href="index.html" class="btn-secondary">Home</a>
-                <a href="register.html" class="btn-primary">Register</a>
-            </div>
-        </nav>
-
-        <main class="auth-section">
-            <div class="login-card">
-                <div class="auth-header">
-                    <h2>Welcome <span class="gradient-text">Back</span></h2>
-                    <p>Enter your credentials to access your pulse.</p>
-                </div>
-
-                <form class="auth-form" onsubmit="event.preventDefault(); login();">
-                    <div class="input-group">
-                        <i data-lucide="user"></i>
-                        <input type="text" id="username" placeholder="Username" required>
-                    </div>
-
-                    <div class="input-group">
-                        <i data-lucide="lock"></i>
-                        <input type="password" id="password" placeholder="Password" required>
-                    </div>
-
-                    <div class="form-options">
-                        <label><input type="checkbox"> Remember me</label>
-                        <a href="#" class="gradient-text">Forgot Password?</a>
-                    </div>
-
-                    <button type="submit" class="btn-large">Login to ChatPulse</button>
-                </form>
-
-                <div class="auth-footer">
-                    Don't have an account? <a href="register.html" class="gradient-text">Create one</a>
-                </div>
-            </div>
-        </main>
+    <div class="glass-card auth-container">
+        <div class="logo" style="margin-bottom: 30px;">Chat<span>Pulse</span></div>
+        <h2>Welcome Back</h2>
+        
+        <form id="loginForm" style="display: flex; flex-direction: column; gap: 15px; margin-top: 25px;">
+            <input type="text" id="usernameInput" placeholder="Username" required autocomplete="username">
+            <input type="password" id="passwordInput" placeholder="Password" required autocomplete="current-password">
+            <button type="submit" id="submitBtn" class="btn-primary">Sign In</button>
+        </form>
+        
+        <div style="margin-top: 20px; font-size: 0.9rem; color: var(--text-dim);">
+            New here? <a href="register.html" style="color: var(--primary); text-decoration: none;">Create an account</a>
+        </div>
     </div>
 
-    <script src="auth.js"></script>
-    <script>lucide.createIcons();</script>
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); 
+            
+            // 1. Visual Feedback: Disable button while loading
+            submitBtn.innerText = "Connecting...";
+            submitBtn.style.opacity = "0.7";
+            submitBtn.disabled = true;
+
+            const username = document.getElementById('usernameInput').value;
+            const password = document.getElementById('passwordInput').value;
+
+            try {
+                // 2. Send request to the server API
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // 3. SUCCESS: Save the "key" (token) and name
+                    // This is what stops the "Session Expired" error!
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('username', data.username || username);
+                    
+                    // 4. Redirect to the chat
+                    window.location.href = "chat.html";
+                } else {
+                    // SERVER ERROR (e.g., wrong password)
+                    alert(data.message || "Invalid credentials");
+                    resetButton();
+                }
+            } catch (err) {
+                // NETWORK ERROR (e.g., server is not running)
+                console.error("Login Error:", err);
+                alert("Server is offline. Did you run 'node server.js'?");
+                resetButton();
+            }
+        });
+
+        function resetButton() {
+            submitBtn.innerText = "Sign In";
+            submitBtn.style.opacity = "1";
+            submitBtn.disabled = false;
+        }
+    </script>
 </body>
 </html>

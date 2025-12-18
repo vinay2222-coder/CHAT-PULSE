@@ -12,10 +12,18 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// Middleware
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// API Routes
+// --- 1. PAGE ROUTES ---
+// This ensures that your redirects (window.location.href) work perfectly
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
+app.get('/chat', (req, res) => res.sendFile(path.join(__dirname, 'public', 'chat.html')));
+
+// --- 2. API ROUTES ---
 app.use("/api/auth", authRoutes);
 
 // MongoDB Connection
@@ -23,72 +31,112 @@ mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("✅ MongoDB connected successfully"))
     .catch(err => console.error("❌ MongoDB connection error:", err));
 
+// State management
 const users = {};   // socket.id -> username
 const sockets = {}; // username -> Set of socket.ids
 
-// Socket.io Middleware for Authentication
+// --- 3. SOCKET.IO AUTH MIDDLEWARE ---
 io.use((socket, next) => {
     const token = socket.handshake.auth.token;
-    if (!token) return next(new Error("Authentication error"));
+    if (!token) return next(new Error("Authentication error: No token provided"));
+    
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-        if (err) return next(new Error("Authentication error"));
-        socket.user = decoded;
+        if (err) return next(new Error("Authentication error: Invalid token"));
+        socket.user = decoded; // Contains username from your JWT payload
         next();
     });
 });
 
+// --- 4. SOCKET.IO MAIN LOGIC ---
 io.on("connection", (socket) => {
     const username = socket.user.username;
+    
+    // Store user connection
     users[socket.id] = username;
-
     if (!sockets[username]) sockets[username] = new Set();
     sockets[username].add(socket.id);
 
-    // Broadcast updated online list to all clients
-    io.emit("users", [...new Set(Object.values(users))]);
+    console.log(`🚀 User Connected: ${username} (${socket.id})`);
 
-    // Update: Make this function async to use 'await'
+    // Broadcast updated online list to ALL clients
+    const sendUserList = () => {
+        const onlineUsers = [...new Set(Object.values(users))];
+        io.emit("users", onlineUsers);
+    };
+    
+    sendUserList();
+
+    // Handle Private Messages
     socket.on("privateMessage", async (data) => {
         const { toUser, text } = data;
-        
-        // 1. Save message to Database immediately
-        const newMessage = new Message({
-            sender: username,
-            receiver: toUser,
-            text: text
-        });
-        await newMessage.save();
+        try {
+            const newMessage = new Message({
+                sender: username,
+                receiver: toUser,
+                text: text
+            });
+            await newMessage.save();
 
-        // 2. Send to recipient if they are online
-        const targetIds = sockets[toUser];
+            const targetIds = sockets[toUser];
+            if (targetIds) {
+                targetIds.forEach(id => {
+                    io.to(id).emit("privateMessage", { fromUser: username, text });
+                });
+            }
+        } catch (err) {
+            console.error("Error saving message:", err);
+        }
+    });
+
+    // Handle Chat History
+    socket.on("getChatHistory", async (otherUser) => {
+        try {
+            const history = await Message.find({
+                $or: [
+                    { sender: username, receiver: otherUser },
+                    { sender: otherUser, receiver: username }
+                ]
+            }).sort({ timestamp: 1 });
+            
+            socket.emit("chatHistory", history);
+        } catch (err) {
+            console.error("Error fetching history:", err);
+        }
+    });
+
+    // Handle Typing Status
+    socket.on("typing", (data) => {
+        const targetIds = sockets[data.toUser];
         if (targetIds) {
             targetIds.forEach(id => {
-                io.to(id).emit("privateMessage", { fromUser: username, text });
+                io.to(id).emit("typing", { fromUser: username });
             });
         }
     });
 
-    // 3. New Listener: Send old messages when a user clicks a contact
-    socket.on("getChatHistory", async (otherUser) => {
-        const history = await Message.find({
-            $or: [
-                { sender: username, receiver: otherUser },
-                { sender: otherUser, receiver: username }
-            ]
-        }).sort({ timestamp: 1 }); // Sort by time (oldest to newest)
+    // --- 5. DISCONNECT LOGIC (Crucial for "No Contacts" Fix) ---
+    socket.on("disconnect", () => {
+        console.log(`Bye ${username}`);
         
-        socket.emit("chatHistory", history);
+        // Remove from users list
+        delete users[socket.id];
+        
+        // Remove from sockets set
+        if (sockets[username]) {
+            sockets[username].delete(socket.id);
+            if (sockets[username].size === 0) {
+                delete sockets[username];
+            }
+        }
+        
+        // Send updated list so people disappear when they log out
+        sendUserList();
     });
+});
 
-    // Inside io.on("connection")
-socket.on("typing", (data) => {
-    const targetIds = sockets[data.toUser];
-    if (targetIds) {
-        targetIds.forEach(id => {
-            io.to(id).emit("typing", { fromUser: username });
-        });
-    }
-});
-});
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Server http://localhost:3000/ ${PORT}`));
+server.listen(PORT, () => {
+    console.log(`-------------------------------------------`);
+    console.log(`📡 Server running at http://localhost:${PORT}`);
+    console.log(`-------------------------------------------`);
+});

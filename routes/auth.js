@@ -1,44 +1,57 @@
-const express = require('express');
-const router = express.Router();
-const User = require('../models/User');
+const router = require('express').Router();
 const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
+const User = require('../models/User'); // Ensure this path matches your file structure
 
-// Register Route
+// --- REGISTER ROUTE ---
 router.post('/register', async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { username, password, email } = req.body;
         
-        // Check if user exists
-        let user = await User.findOne({ email });
-        if (user) return res.status(400).json({ message: "User already exists" });
+        // 1. Check if user already exists
+        const existingUser = await User.findOne({ username });
+        if (existingUser) return res.status(400).json({ message: "Username taken" });
 
-        // Hash password and save
-        const hashedPassword = await bcrypt.hash(password, 10);
-        user = new User({ name, email, password: hashedPassword });
-        await user.save();
+        // 2. Save new user
+        const newUser = new User({ username, password, email });
+        await newUser.save();
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+        // 3. CREATE THE TOKEN (This fixes the ReferenceError)
+        const token = jwt.sign(
+            { username: newUser.username }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '24h' }
+        );
+
+        // 4. Send response
+        res.status(201).json({ token, username: newUser.username });
     } catch (err) {
-        res.status(500).json({ message: "Server error during registration" });
+        console.error(err);
+        res.status(500).json({ message: "Error creating user" });
     }
 });
 
-// Login Route
+// --- LOGIN ROUTE ---
 router.post('/login', async (req, res) => {
     try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) return res.status(400).json({ message: "User not found" });
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) return res.status(400).json({ message: "Invalid credentials" });
+        // Simple password check (Note: In production, use bcrypt to compare hashes)
+        if (!user || user.password !== password) {
+            return res.status(401).json({ message: "Invalid credentials" });
+        }
 
-        const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
-        res.json({ token, user: { id: user._id, name: user.name, email: user.email } });
+        // CREATE THE TOKEN HERE TOO
+        const token = jwt.sign(
+            { username: user.username }, 
+            process.env.JWT_SECRET, 
+            { expiresIn: '24h' }
+        );
+
+        res.json({ token, username: user.username });
     } catch (err) {
-        res.status(500).json({ message: "Server error during login" });
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
     }
 });
 

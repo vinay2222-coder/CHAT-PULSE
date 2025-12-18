@@ -2,111 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ChatPulse | Private Messaging</title>
+    <title>ChatPulse | Messaging Redefined</title>
     <link rel="stylesheet" href="style.css">
-    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body class="landing-body">
-    <div class="pulse-bg">
-        <div class="blob-1"></div>
-        <div class="blob-2"></div>
-    </div>
-
+    <div class="pulse-bg"><div class="blob-1"></div><div class="blob-2"></div></div>
     <div class="landing-container">
         <nav class="landing-nav">
             <div class="logo">Chat<span>Pulse</span></div>
-            <div class="nav-links">
-                <a href="login.html" class="btn-secondary" style="color: white; text-decoration: none; font-weight: 600;">Login</a>
-                <a href="register.html" class="btn-primary">Get Started</a>
+            <div style="display: flex; gap: 20px;">
+                <a href="login.html" style="color: white; text-decoration: none; font-weight: 600; padding: 10px;">Login</a>
+                <a href="register.html" class="btn-primary" style="padding: 10px 20px;">Get Started</a>
             </div>
         </nav>
-
         <main class="hero-section">
-            <h1 class="reveal-text">Private Messaging, <br>
-                <span class="gradient-text" id="typewriter"></span>
-            </h1>
-            <p class="fade-in" style="max-width: 600px; color: var(--text-dim); margin-top: 20px;">
-                Connect with your inner circle in a secure, real-time environment. 
-                No global noise, just pure, uninterrupted conversation.
-            </p>
-            
-            <div class="hero-btns fade-in" style="margin-top: 40px;">
-                <a href="register.html" class="btn-large">Create Free Account</a>
-            </div>
+            <h1 style="font-size: 4rem;">Private Messaging, <br><span class="gradient-text">Redefined.</span></h1>
+            <p style="color: var(--text-dim); margin: 20px 0;">Connect securely. No noise, just conversation.</p>
+            <a href="register.html" class="btn-primary" style="padding: 15px 30px; font-size: 1.1rem;">Create Free Account</a>
         </main>
-
-        <section class="features fade-in">
-            <div class="feature-card" data-tilt>
-                <i data-lucide="shield-check" style="color: var(--primary);"></i>
-                <h3>Secure</h3>
-                <p>JWT-based authentication ensures your chats stay strictly private.</p>
-            </div>
-            <div class="feature-card" data-tilt>
-                <i data-lucide="zap" style="color: var(--primary);"></i>
-                <h3>Instant</h3>
-                <p>Powered by Socket.io for real-time delivery with zero lag.</p>
-            </div>
-            <div class="feature-card" data-tilt>
-                <i data-lucide="database" style="color: var(--primary);"></i>
-                <h3>Persistent</h3>
-                <p>Chat history is securely stored in MongoDB for easy access later.</p>
-            </div>
-            <div class="feature-card" data-tilt>
-                <i data-lucide="users" style="color: var(--primary);"></i>
-                <h3>Circle-Only</h3>
-                <p>Focus on your contacts. A private space designed for your team.</p>
-            </div>
-        </section>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
-    <script>
-        // Initialize Icons
-        lucide.createIcons();
-
-        // Initialize Tilt on cards
-        VanillaTilt.init(document.querySelectorAll(".feature-card"), {
-            max: 15,
-            speed: 400,
-            glare: true,
-            "max-glare": 0.2,
-        });
-
-        // Robust Typewriter Effect
-        const textElement = document.getElementById('typewriter');
-        const words = ["Redefined.", "Simplified.", "Secured.", "Better."];
-        let wordIndex = 0;
-        let charIndex = 0;
-        let isDeleting = false;
-
-        function type() {
-            const currentWord = words[wordIndex];
-            
-            if (isDeleting) {
-                textElement.textContent = currentWord.substring(0, charIndex - 1);
-                charIndex--;
-            } else {
-                textElement.textContent = currentWord.substring(0, charIndex + 1);
-                charIndex++;
-            }
-
-            // Speed logic
-            let typeSpeed = isDeleting ? 70 : 150;
-
-            if (!isDeleting && charIndex === currentWord.length) {
-                typeSpeed = 2000; // Wait at end
-                isDeleting = true;
-            } else if (isDeleting && charIndex === 0) {
-                isDeleting = false;
-                wordIndex = (wordIndex + 1) % words.length;
-                typeSpeed = 500;
-            }
-
-            setTimeout(type, typeSpeed);
-        }
-
-        document.addEventListener('DOMContentLoaded', type);
-    </script>
 </body>
 </html>

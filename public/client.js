@@ -1,119 +1,114 @@
-const token = localStorage.getItem("token");
-const myName = localStorage.getItem("username");
-if (!token) window.location.href = "login.html";
+const socket = io({
+    auth: { token: localStorage.getItem("token") }
+});
 
-// Initialization
-const socket = io({ auth: { token } });
-let recipient = null;
-let unreadCounts = {}; 
-let typingTimeout;
+const messageList = document.getElementById("private-messages");
+const userList = document.getElementById("users");
+const msgInput = document.getElementById("msg");
+const chatTitle = document.getElementById("chat-title");
+const inputArea = document.getElementById("input-area");
+const typingIndicator = document.getElementById("typing-indicator");
 
-// 1. User List & Interactivity
-socket.on("users", users => {
-    const list = document.getElementById("users");
-    list.innerHTML = "";
+let selectedUser = null;
+const myUsername = localStorage.getItem("username");
+
+// 1. Handle Online Users List
+socket.on("users", (usersArray) => {
+    console.log("Online users received:", usersArray); // CHECK YOUR CONSOLE (F12)
     
-    users.forEach(u => {
-        if (u === myName) return;
-        const li = document.createElement("li");
-        
-        li.innerHTML = `
-            <div style="position: relative;">
-                <div class="avatar">${u[0].toUpperCase()}</div>
-                <div class="status-dot pulse"></div>
-            </div>
-            <div style="flex:1; margin-left: 10px;"><strong>${u}</strong></div>
-            <span class="badge" id="badge-${u}" style="display:none"></span>
-        `;
-        
-        li.onclick = () => {
-            recipient = u;
-            document.getElementById("chat-title").innerText = "Chatting with " + u;
-            document.getElementById("input-area").style.display = "flex";
-            
-            unreadCounts[u] = 0;
-            const badge = document.getElementById(`badge-${u}`);
-            if (badge) {
-                badge.innerText = "";
-                badge.style.display = "none";
-            }
+    const userList = document.getElementById("users");
+    const myUsername = localStorage.getItem("username");
+    
+    userList.innerHTML = ""; // Clear current list
 
-            socket.emit("getChatHistory", u); 
-        };
-        list.appendChild(li);
+    if (usersArray.length <= 1) {
+        userList.innerHTML = '<li style="padding:10px; color:var(--text-dim); font-size:0.8rem;">No other users online</li>';
+        return;
+    }
+
+    usersArray.forEach((user) => {
+        // Only show users that are NOT me
+        if (user !== myUsername) {
+            const li = document.createElement("li");
+            li.className = "user-item";
+            li.style.cursor = "pointer";
+            li.innerHTML = `
+                <div class="user-link">
+                    <div class="avatar-small">${user.substring(0,2).toUpperCase()}</div>
+                    <span>${user}</span>
+                    <div class="online-indicator"></div>
+                </div>
+            `;
+            li.onclick = () => selectUser(user);
+            userList.appendChild(li);
+        }
     });
 });
 
-// 2. Real-time Messaging (Sound Effects Removed)
-socket.on("privateMessage", data => {
-    // We only check if the message is from the active recipient
-    if (recipient === data.fromUser) {
-        appendMsg(data.fromUser, data.text);
-    } else {
-        // Increment unread count if not currently chatting with them
-        unreadCounts[data.fromUser] = (unreadCounts[data.fromUser] || 0) + 1;
-        updateBadge(data.fromUser);
-    }
+// 2. Select a contact to chat
+function selectUser(user) {
+    selectedUser = user;
+    chatTitle.innerText = `Chat with ${user}`;
+    inputArea.style.display = "flex";
+    messageList.innerHTML = ""; // Clear view
+    socket.emit("getChatHistory", user);
+}
+
+// 3. Load Chat History
+socket.on("chatHistory", (history) => {
+    history.forEach((msg) => {
+        appendMessage(msg.sender === myUsername ? "my" : "their", msg.text);
+    });
 });
 
-function updateBadge(username) {
-    const badge = document.getElementById(`badge-${username}`);
-    if (badge && unreadCounts[username] > 0) {
-        badge.innerText = unreadCounts[username];
-        badge.style.display = "inline-block";
+// 4. Sending Messages
+function sendMessage() {
+    const text = msgInput.value.trim();
+    if (text && selectedUser) {
+        socket.emit("privateMessage", { toUser: selectedUser, text });
+        appendMessage("my", text);
+        msgInput.value = "";
     }
 }
 
-// 3. Typing Indicator Logic
-document.getElementById("msg").addEventListener("input", () => {
-    if (recipient) {
-        socket.emit("typing", { toUser: recipient });
+// 5. Receiving Messages
+socket.on("privateMessage", (data) => {
+    if (selectedUser === data.fromUser) {
+        appendMessage("their", data.text);
+    } else {
+        alert(`New message from ${data.fromUser}`);
     }
+});
+
+// 6. UI Helper
+function appendMessage(type, text) {
+    const li = document.createElement("li");
+    li.className = type === "my" ? "my-message" : "their-message";
+    li.innerText = text;
+    messageList.appendChild(li);
+    messageList.scrollTop = messageList.scrollHeight;
+}
+
+// Typing Indicator logic
+msgInput.addEventListener("input", () => {
+    if (selectedUser) socket.emit("typing", { toUser: selectedUser });
 });
 
 socket.on("typing", (data) => {
-    if (recipient === data.fromUser) {
-        const indicator = document.getElementById("typing-indicator");
-        indicator.innerText = `${data.fromUser} is typing...`;
-        
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-            indicator.innerText = "";
-        }, 2000);
+    if (data.fromUser === selectedUser) {
+        typingIndicator.innerText = `${data.fromUser} is typing...`;
+        setTimeout(() => { typingIndicator.innerText = ""; }, 2000);
     }
 });
 
-// 4. Core Functions
-function sendMessage() {
-    const input = document.getElementById("msg");
-    const text = input.value.trim();
-    if (!text || !recipient) return;
-    
-    socket.emit("privateMessage", { toUser: recipient, text });
-    appendMsg("You", text);
-    input.value = "";
-}
-
-function appendMsg(user, text) {
-    const li = document.createElement("li");
-    li.className = user === "You" ? "my-message" : "their-message";
-    li.innerText = text;
-    
-    const box = document.getElementById("private-messages");
-    box.appendChild(li);
-    box.scrollTop = box.scrollHeight;
-}
-
-socket.on("chatHistory", messages => {
-    const box = document.getElementById("private-messages");
-    box.innerHTML = ""; 
-    messages.forEach(msg => {
-        const senderName = msg.sender === myName ? "You" : msg.sender;
-        appendMsg(senderName, msg.text);
-    });
+socket.on("connect_error", (err) => {
+    console.error("Socket Connection Error:", err.message);
+    if (err.message === "Authentication error") {
+        alert("Session expired. Please login again.");
+        window.location.href = "login.html";
+    }
 });
 
-function logout() { 
-    localStorage.clear(); 
-    window.location.href = "login.html"; 
-}
+socket.on("connect", () => {
+    console.log("Connected to server successfully!");
+});
