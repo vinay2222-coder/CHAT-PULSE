@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatPulse | Messaging</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="chat-page-body">
+    <div class="pulse-bg">
+        <div class="blob-1"></div>
+        <div class="blob-2"></div>
+    </div>
+
+    <div id="container">
+        <aside id="sidebar">
+            <div class="user-header">
+                <div class="logo">Chat<span>Pulse</span></div>
+                <p style="font-size: 0.8rem; color: var(--text-dim); margin-top: 10px;">Contacts</p>
+            </div>
+            <ul id="users"></ul>
+            <div class="sidebar-footer">
+                <button onclick="logout()" class="btn-logout">
+                    <i data-lucide="log-out"></i> Logout
+                </button>
+            </div>
+        </aside>
+
+        <main id="chat-panel">
+            <header id="chat-header">
+                <div id="chat-title">Select a contact to start</div>
+                <div id="typing-indicator"></div>
+            </header>
+            
+            <ul id="private-messages"></ul>
+
+            <div id="input-area" style="display: none;">
+                <input type="text" id="msg" placeholder="Type a message..." autocomplete="off">
+                <button onclick="sendMessage()" class="btn-send">
+                    <i data-lucide="send"></i>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="client.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

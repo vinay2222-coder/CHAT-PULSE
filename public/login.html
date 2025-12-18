@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatPulse | Login</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="landing-body">
+    <div class="pulse-bg">
+        <div class="blob-1"></div>
+        <div class="blob-2"></div>
+    </div>
+
+    <div class="landing-container">
+        <nav class="landing-nav">
+            <div class="logo">Chat<span>Pulse</span></div>
+            <div class="nav-links">
+                <a href="index.html" class="btn-secondary">Home</a>
+                <a href="register.html" class="btn-primary">Register</a>
+            </div>
+        </nav>
+
+        <main class="auth-section">
+            <div class="login-card">
+                <div class="auth-header">
+                    <h2>Welcome <span class="gradient-text">Back</span></h2>
+                    <p>Enter your credentials to access your pulse.</p>
+                </div>
+
+                <form class="auth-form" onsubmit="event.preventDefault(); login();">
+                    <div class="input-group">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="username" placeholder="Username" required>
+                    </div>
+
+                    <div class="input-group">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="password" placeholder="Password" required>
+                    </div>
+
+                    <div class="form-options">
+                        <label><input type="checkbox"> Remember me</label>
+                        <a href="#" class="gradient-text">Forgot Password?</a>
+                    </div>
+
+                    <button type="submit" class="btn-large">Login to ChatPulse</button>
+                </form>
+
+                <div class="auth-footer">
+                    Don't have an account? <a href="register.html" class="gradient-text">Create one</a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>
