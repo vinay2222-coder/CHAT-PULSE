@@ -17,7 +17,6 @@
         
         <form id="registerForm" style="display: flex; flex-direction: column; gap: 15px; margin-top: 25px;">
             <input type="text" id="regUsername" placeholder="Username" required autocomplete="username">
-            <input type="email" id="regEmail" placeholder="Email Address" required autocomplete="email">
             <input type="password" id="regPassword" placeholder="Password" required autocomplete="new-password">
             <button type="submit" id="regBtn" class="btn-primary">Create Account</button>
         </form>
@@ -40,7 +39,6 @@
             regBtn.disabled = true;
 
             const username = document.getElementById('regUsername').value;
-            const email = document.getElementById('regEmail').value;
             const password = document.getElementById('regPassword').value;
 
             try {
@@ -48,7 +46,7 @@
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password })
+                    body: JSON.stringify({ username, password })
                 });
 
                 const data = await response.json();
