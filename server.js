@@ -28,8 +28,8 @@ app.use("/api/auth", authRoutes);
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log("✅ MongoDB connected successfully"))
-    .catch(err => console.error("❌ MongoDB connection error:", err));
+    .then(() => console.log("MongoDB connected successfully"))
+    .catch(err => console.error("MongoDB connection error:", err));
 
 // State management
 const users = {};   // socket.id -> username
@@ -136,7 +136,5 @@ io.on("connection", (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-    console.log(`-------------------------------------------`);
-    console.log(`📡 Server running at http://localhost:${PORT}`);
-    console.log(`-------------------------------------------`);
+    console.log(`Server running at http://localhost:${PORT}`);
 });
