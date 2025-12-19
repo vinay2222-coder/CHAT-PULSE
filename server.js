@@ -16,17 +16,17 @@ const io = new Server(server);
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "public")));
 
-// --- 1. PAGE ROUTES ---
-// This ensures that your redirects (window.location.href) work perfectly
+//Path routes for HTML files
+//Html routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
 app.get('/register', (req, res) => res.sendFile(path.join(__dirname, 'public', 'register.html')));
 app.get('/chat', (req, res) => res.sendFile(path.join(__dirname, 'public', 'chat.html')));
 
-// --- 2. API ROUTES ---
+//API Routes
 app.use("/api/auth", authRoutes);
 
-// MongoDB Connection
+//MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log("MongoDB connected successfully"))
     .catch(err => console.error("MongoDB connection error:", err));
@@ -35,30 +35,30 @@ mongoose.connect(process.env.MONGO_URI)
 const users = {};   // socket.id -> username
 const sockets = {}; // username -> Set of socket.ids
 
-// --- 3. SOCKET.IO AUTH MIDDLEWARE ---
+//Socket.io for real-time communication
 io.use((socket, next) => {
     const token = socket.handshake.auth.token;
     if (!token) return next(new Error("Authentication error: No token provided"));
     
     jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
         if (err) return next(new Error("Authentication error: Invalid token"));
-        socket.user = decoded; // Contains username from your JWT payload
+        socket.user = decoded; 
         next();
     });
 });
 
-// --- 4. SOCKET.IO MAIN LOGIC ---
+// Socket.io Connection Handling
 io.on("connection", (socket) => {
     const username = socket.user.username;
     
-    // Store user connection
+    //Store user connection
     users[socket.id] = username;
     if (!sockets[username]) sockets[username] = new Set();
     sockets[username].add(socket.id);
 
-    console.log(`🚀 User Connected: ${username} (${socket.id})`);
+    console.log(`User Connected: ${username} (${socket.id})`);
 
-    // Broadcast updated online list to ALL clients
+    //Update and send user list to all clients
     const sendUserList = () => {
         const onlineUsers = [...new Set(Object.values(users))];
         io.emit("users", onlineUsers);
@@ -66,7 +66,7 @@ io.on("connection", (socket) => {
     
     sendUserList();
 
-    // Handle Private Messages
+    //This handles private messages between users
     socket.on("privateMessage", async (data) => {
         const { toUser, text } = data;
         try {
@@ -88,7 +88,7 @@ io.on("connection", (socket) => {
         }
     });
 
-    // Handle Chat History
+    //Handle Chat History
     socket.on("getChatHistory", async (otherUser) => {
         try {
             const history = await Message.find({
@@ -104,7 +104,7 @@ io.on("connection", (socket) => {
         }
     });
 
-    // Handle Typing Status
+    //Handle Typing Status
     socket.on("typing", (data) => {
         const targetIds = sockets[data.toUser];
         if (targetIds) {
@@ -114,14 +114,14 @@ io.on("connection", (socket) => {
         }
     });
 
-    // --- 5. DISCONNECT LOGIC (Crucial for "No Contacts" Fix) ---
+    //Maintain user list on disconnect
     socket.on("disconnect", () => {
         console.log(`Bye ${username}`);
         
-        // Remove from users list
+        //Remove from users map
         delete users[socket.id];
         
-        // Remove from sockets set
+        //Remove from sockets set
         if (sockets[username]) {
             sockets[username].delete(socket.id);
             if (sockets[username].size === 0) {
@@ -129,7 +129,7 @@ io.on("connection", (socket) => {
             }
         }
         
-        // Send updated list so people disappear when they log out
+        //Send updated list so people disappear when they log out
         sendUserList();
     });
 });

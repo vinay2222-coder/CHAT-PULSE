@@ -2,20 +2,20 @@ const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 const User = require('../models/User'); 
 
-// --- REGISTER ROUTE ---
+//Register Route
 router.post('/register', async (req, res) => {
     try {
-        // 1. Only get username and password from the frontend
+        // get username and password from the frontend
         const { username, password } = req.body; 
         
         const existingUser = await User.findOne({ username });
         if (existingUser) return res.status(400).json({ message: "Username taken" });
 
-        // 2. Create user without the email field
+        //Create user in DB
         const newUser = new User({ username, password });
         await newUser.save();
 
-        // 3. Create the token
+        //Create the token
         const token = jwt.sign(
             { username: newUser.username }, 
             process.env.JWT_SECRET, 
@@ -29,7 +29,7 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// --- LOGIN ROUTE ---
+//Login Route
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;

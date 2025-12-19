@@ -32,8 +32,7 @@
 
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault(); 
-            
-            // 1. Loading State
+
             regBtn.innerText = "Creating Account...";
             regBtn.style.opacity = "0.7";
             regBtn.disabled = true;
@@ -42,7 +41,6 @@
             const password = document.getElementById('regPassword').value;
 
             try {
-                // 2. Call the Register API
                 const response = await fetch('/api/auth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -52,7 +50,6 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // 3. SUCCESS: Store the token and redirect
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.username || username);
                     

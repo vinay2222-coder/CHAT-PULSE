@@ -32,8 +32,7 @@
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault(); 
-            
-            // 1. Visual Feedback: Disable button while loading
+
             submitBtn.innerText = "Connecting...";
             submitBtn.style.opacity = "0.7";
             submitBtn.disabled = true;
@@ -42,7 +41,6 @@
             const password = document.getElementById('passwordInput').value;
 
             try {
-                // 2. Send request to the server API
                 const response = await fetch('/api/auth/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -52,20 +50,15 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // 3. SUCCESS: Save the "key" (token) and name
-                    // This is what stops the "Session Expired" error!
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.username || username);
                     
-                    // 4. Redirect to the chat
                     window.location.href = "chat.html";
                 } else {
-                    // SERVER ERROR (e.g., wrong password)
                     alert(data.message || "Invalid credentials");
                     resetButton();
                 }
             } catch (err) {
-                // NETWORK ERROR (e.g., server is not running)
                 console.error("Login Error:", err);
                 alert("Server is offline. Did you run 'node server.js'?");
                 resetButton();

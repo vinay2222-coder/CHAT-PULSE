@@ -1,7 +1,11 @@
+
 const socket = io({
-    auth: { token: localStorage.getItem("token") }
+    auth: { 
+        token: localStorage.getItem("token") 
+    }
 });
 
+// UI Element References
 const messageList = document.getElementById("private-messages");
 const userList = document.getElementById("users");
 const msgInput = document.getElementById("msg");
@@ -9,17 +13,13 @@ const chatTitle = document.getElementById("chat-title");
 const inputArea = document.getElementById("input-area");
 const typingIndicator = document.getElementById("typing-indicator");
 
+// State Variables
 let selectedUser = null;
 const myUsername = localStorage.getItem("username");
 
-// 1. Handle Online Users List
+// Updates the sidebar when users connect or disconnect
 socket.on("users", (usersArray) => {
-    console.log("Online users received:", usersArray); // CHECK YOUR CONSOLE (F12)
-    
-    const userList = document.getElementById("users");
-    const myUsername = localStorage.getItem("username");
-    
-    userList.innerHTML = ""; // Clear current list
+    userList.innerHTML = "";
 
     if (usersArray.length <= 1) {
         userList.innerHTML = '<li style="padding:10px; color:var(--text-dim); font-size:0.8rem;">No other users online</li>';
@@ -27,11 +27,11 @@ socket.on("users", (usersArray) => {
     }
 
     usersArray.forEach((user) => {
-        // Only show users that are NOT me
         if (user !== myUsername) {
             const li = document.createElement("li");
             li.className = "user-item";
-            li.style.cursor = "pointer";
+            li.setAttribute('data-username', user);
+            
             li.innerHTML = `
                 <div class="user-link">
                     <div class="avatar-small">${user.substring(0,2).toUpperCase()}</div>
@@ -39,29 +39,39 @@ socket.on("users", (usersArray) => {
                     <div class="online-indicator"></div>
                 </div>
             `;
+            
             li.onclick = () => selectUser(user);
             userList.appendChild(li);
         }
     });
 });
 
-// 2. Select a contact to chat
+//CHAT SELECTION ---
 function selectUser(user) {
     selectedUser = user;
     chatTitle.innerText = `Chat with ${user}`;
     inputArea.style.display = "flex";
-    messageList.innerHTML = ""; // Clear view
+    messageList.innerHTML = ""; // Clear the message view for the new conversation
+
+    // Remove red dot if present
+    const userLi = document.querySelector(`li[data-username="${user}"]`);
+    if (userLi) {
+        const dot = userLi.querySelector('.unread-dot');
+        if (dot) dot.remove();
+    }
+
+    // Request message history from the server
     socket.emit("getChatHistory", user);
 }
 
-// 3. Load Chat History
+// Load historical messages
 socket.on("chatHistory", (history) => {
     history.forEach((msg) => {
         appendMessage(msg.sender === myUsername ? "my" : "their", msg.text);
     });
 });
 
-// 4. Sending Messages
+// Send a message
 function sendMessage() {
     const text = msgInput.value.trim();
     if (text && selectedUser) {
@@ -71,44 +81,64 @@ function sendMessage() {
     }
 }
 
-// 5. Receiving Messages
+// Receive a new message
 socket.on("privateMessage", (data) => {
+    // Check if the message is from the person we are currently chatting with
     if (selectedUser === data.fromUser) {
         appendMessage("their", data.text);
     } else {
-        alert(`New message from ${data.fromUser}`);
+        const userLi = document.querySelector(`li[data-username="${data.fromUser}"]`);
+        if (userLi) {t
+            if (!userLi.querySelector('.unread-dot')) {
+                const dot = document.createElement('div');
+                dot.className = 'unread-dot';
+                userLi.querySelector('.user-link').appendChild(dot);
+            }
+        }
     }
 });
 
-// 6. UI Helper
+// UI Helper: Render message to screen
 function appendMessage(type, text) {
     const li = document.createElement("li");
     li.className = type === "my" ? "my-message" : "their-message";
     li.innerText = text;
     messageList.appendChild(li);
+    
+    // Auto-scroll to the bottom
     messageList.scrollTop = messageList.scrollHeight;
 }
 
-// Typing Indicator logic
+
+msgInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendMessage();
+});
+
 msgInput.addEventListener("input", () => {
-    if (selectedUser) socket.emit("typing", { toUser: selectedUser });
+    if (selectedUser) {
+        socket.emit("typing", { toUser: selectedUser });
+    }
 });
 
 socket.on("typing", (data) => {
     if (data.fromUser === selectedUser) {
         typingIndicator.innerText = `${data.fromUser} is typing...`;
-        setTimeout(() => { typingIndicator.innerText = ""; }, 2000);
+        setTimeout(() => { 
+            typingIndicator.innerText = ""; 
+        }, 2000);
     }
+});
+
+//CONNECTION & AUTH ERROR HANDLING ---
+socket.on("connect", () => {
+    console.log("Connected to ChatPulse server!");
 });
 
 socket.on("connect_error", (err) => {
-    console.error("Socket Connection Error:", err.message);
+    console.error("Socket Error:", err.message);
     if (err.message === "Authentication error") {
-        alert("Session expired. Please login again.");
+        alert("Your session has expired. Please log in again.");
+        localStorage.clear();
         window.location.href = "login.html";
     }
-});
-
-socket.on("connect", () => {
-    console.log("Connected to server successfully!");
 });
