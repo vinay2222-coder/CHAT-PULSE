@@ -1,32 +1,31 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
-const User = require('../models/User'); // Ensure this path matches your file structure
+const User = require('../models/User'); 
 
 // --- REGISTER ROUTE ---
 router.post('/register', async (req, res) => {
     try {
-        const { username, password, email } = req.body;
+        // 1. Only get username and password from the frontend
+        const { username, password } = req.body; 
         
-        // 1. Check if user already exists
         const existingUser = await User.findOne({ username });
         if (existingUser) return res.status(400).json({ message: "Username taken" });
 
-        // 2. Save new user
-        const newUser = new User({ username, password, email });
+        // 2. Create user without the email field
+        const newUser = new User({ username, password });
         await newUser.save();
 
-        // 3. CREATE THE TOKEN (This fixes the ReferenceError)
+        // 3. Create the token
         const token = jwt.sign(
             { username: newUser.username }, 
             process.env.JWT_SECRET, 
             { expiresIn: '24h' }
         );
 
-        // 4. Send response
         res.status(201).json({ token, username: newUser.username });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Error creating user" });
+        console.error("REGISTER ERROR:", err);
+        res.status(500).json({ message: "Server error during registration" });
     }
 });
 
@@ -36,12 +35,10 @@ router.post('/login', async (req, res) => {
         const { username, password } = req.body;
         const user = await User.findOne({ username });
 
-        // Simple password check (Note: In production, use bcrypt to compare hashes)
         if (!user || user.password !== password) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
 
-        // CREATE THE TOKEN HERE TOO
         const token = jwt.sign(
             { username: user.username }, 
             process.env.JWT_SECRET, 
@@ -50,8 +47,8 @@ router.post('/login', async (req, res) => {
 
         res.json({ token, username: user.username });
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: "Server error" });
+        console.error("LOGIN ERROR:", err);
+        res.status(500).json({ message: "Server error during login" });
     }
 });
 
