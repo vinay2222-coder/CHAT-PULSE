@@ -36,3 +36,23 @@ ChatPulse is a lightweight, real-time messaging application built with the MERN 
 ├── public/           # Frontend Files (HTML, CSS, Client JS)
 ├── server.js         # Main Server & Socket logic
 └── .env              # Environment Variables (Local only)
+
+---
+
+## ⚙️ Local Installation
+1. Clone the repository:
+git clone [https://github.com/your-username/chat-pulse.git](https://github.com/your-username/chat-pulse.git)
+cd chat-pulse
+
+2. Install dependencies:
+npm install
+
+3. Configure Environment Variables: Create a .env file in the root directory and add:
+MONGO_URI=your_mongodb_atlas_connection_string
+JWT_SECRET=your_secure_random_string
+PORT=3000
+
+4. Start the server:
+npm start
+
+Open http://localhost:3000 in your browser.
